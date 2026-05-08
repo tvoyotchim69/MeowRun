@@ -3203,7 +3203,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 2095.1465, y: 910}
+  m_AnchoredPosition: {x: 1560.5886, y: 815.9999}
   m_SizeDelta: {x: 328.927, y: 54.820984}
   m_Pivot: {x: 1, y: 1}
 --- !u!114 &1051272436
@@ -5124,7 +5124,7 @@ Transform:
   m_GameObject: {fileID: 1950499536}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1988.5577, y: -959.99994, z: 4946.195}
+  m_LocalPosition: {x: 1454, y: -1054, z: 4946.195}
   m_LocalScale: {x: 3.1270359, y: 3.1270359, z: 3.1270359}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -5537,6 +5537,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 168127563}
     - target: {fileID: 4447700300727522452, guid: 3e4877b8411a9854184526490c97ec0a, type: 3}
+      propertyPath: deathSound
+      value: 
+      objectReference: {fileID: 8300000, guid: 76d4e8ee64690d943adaf7eecfd03fa8, type: 3}
+    - target: {fileID: 4447700300727522452, guid: 3e4877b8411a9854184526490c97ec0a, type: 3}
       propertyPath: slideSound
       value: 
       objectReference: {fileID: 8300000, guid: ae9c35b9c2b27ff44a7ab0d3abcb70a8, type: 3}
@@ -5588,6 +5592,10 @@ PrefabInstance:
       propertyPath: backgroundMusic
       value: 
       objectReference: {fileID: 205097860}
+    - target: {fileID: 4447700300727522452, guid: 3e4877b8411a9854184526490c97ec0a, type: 3}
+      propertyPath: explosionPrefab
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 4447700300727522452, guid: 3e4877b8411a9854184526490c97ec0a, type: 3}
       propertyPath: laneChangeSpeed
       value: 15

@@ -21,10 +21,10 @@ public class PlayerController : MonoBehaviour
     public float fastFallForce = 75f;
 
     [Header("Progression (Difficulty)")]
-    public float accelerationInterval = 15f; // Изменено на 15 секунд
-    public float speedMultiplier = 1.15f;    // Изменено на 15% (1.15)
-    public float maxTotalAcceleration = 2.5f; // Можно чуть увеличить лимит
-    private float currentTotalMultiplier = 1.0f;
+    public float accelerationInterval = 15f;
+    public float speedMultiplier = 1.15f;
+    public float maxTotalAcceleration = 2.5f;
+    private float currentTotalMultiplier = 1.0f;
     private float nextAccelerationTime;
 
     [Header("Shrink/Slide Settings")]
@@ -42,20 +42,24 @@ public class PlayerController : MonoBehaviour
     public GameObject settingsPanel;
     public GameObject blurVolume;
     public GameObject speedUpText;
-    private Animator speedUpAnimator; // Ссылка на Animator на тексте
+    private Animator speedUpAnimator;
 
-    [Header("Audio & Music")]
+    [Header("Audio & Music")]
     public AudioSource backgroundMusic;
     public AudioClip[] musicTracks;
     public Slider volumeSlider;
     public TMP_Dropdown musicDropdown;
-    public AudioClip speedUpSound; // Ссылка на звуковой файл (WAV/MP3)
-    private AudioSource audioSource; // Компонент для воспроизведения звуков
-    public AudioClip jumpSound;   // Звук прыжка
-    public AudioClip slideSound;  // Звук скольжения
+    public AudioClip speedUpSound;
+    private AudioSource audioSource;
+    public AudioClip jumpSound;
+    public AudioClip slideSound;
+    public AudioClip deathSound; // Звук взрыва (BOOM)
 
-    [Header("Animation")]
+    [Header("Animation")]
     public Animator heroAnimator;
+
+    [Header("VFX (Optional)")]
+    public GameObject explosionPrefab; // Префаб частиц взрыва, если есть
 
     private int currentLane = 0;
     private Vector3 targetPosition;
@@ -77,8 +81,8 @@ public class PlayerController : MonoBehaviour
 
     void Start()
     {
-        // Громкость по умолчанию при первом запуске
-        SetVolume(0.25f);
+        // Настройки по умолчанию
+        SetVolume(0.25f);
         if (volumeSlider != null) volumeSlider.value = 0.25f;
 
         Time.timeScale = 0;
@@ -89,7 +93,8 @@ public class PlayerController : MonoBehaviour
         if (rb != null)
         {
             rb.useGravity = true;
-            rb.freezeRotation = true;
+            rb.freezeRotation = true; // Ровный бег при старте
+            rb.rotation = Quaternion.identity; // Выпрямляем кота
             rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         }
 
@@ -108,22 +113,13 @@ public class PlayerController : MonoBehaviour
         InitializeAudio();
         SetupUI();
 
-        // Скрываем уведомление об ускорении при старте
-        if (speedUpText != null) speedUpText.SetActive(false);
+        if (speedUpText != null) speedUpText.SetActive(false);
 
-        // Получаем AudioSource. Если его нет на объекте, добавляем.
-        audioSource = GetComponent<AudioSource>();
-        if (audioSource == null)
-        {
-            audioSource = gameObject.AddComponent<AudioSource>();
-        }
-        audioSource.ignoreListenerPause = true; // Чтобы звук был слышен даже на паузе (по желанию)
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
+        audioSource.ignoreListenerPause = true;
 
-        // Получаем Animator с объекта текста
-        if (speedUpText != null)
-        {
-            speedUpAnimator = speedUpText.GetComponent<Animator>();
-        }
+        if (speedUpText != null) speedUpAnimator = speedUpText.GetComponent<Animator>();
     }
 
     void InitializeAudio()
@@ -138,8 +134,7 @@ public class PlayerController : MonoBehaviour
 
             if (volumeSlider != null)
             {
-                // Если слайдер не трогали (он в 0), ставим наш дефолт
-                if (volumeSlider.value <= 0.01f) volumeSlider.value = 0.25f;
+                if (volumeSlider.value <= 0.01f) volumeSlider.value = 0.25f;
                 backgroundMusic.volume = volumeSlider.value;
             }
 
@@ -190,8 +185,7 @@ public class PlayerController : MonoBehaviour
                     roadGenerator.UpdateSpeedOnly(speedMultiplier);
                     if (heroAnimator) heroAnimator.speed *= 1.05f;
 
-                    // Показываем сообщение
-                    if (speedMessageCoroutine != null) StopCoroutine(speedMessageCoroutine);
+                    if (speedMessageCoroutine != null) StopCoroutine(speedMessageCoroutine);
                     speedMessageCoroutine = StartCoroutine(ShowSpeedUpMessage());
                 }
                 nextAccelerationTime = Time.time + accelerationInterval;
@@ -203,23 +197,12 @@ public class PlayerController : MonoBehaviour
     {
         if (speedUpText != null && speedUpAnimator != null)
         {
-            // 1. Включаем объект (если он был выключен)
-            speedUpText.SetActive(true);
+            speedUpText.SetActive(true);
+            if (speedUpSound != null && audioSource != null) audioSource.PlayOneShot(speedUpSound);
 
-            // 2. Воспроизводим звук (один раз, не прерывая музыку)
-            if (speedUpSound != null && audioSource != null)
-            {
-                audioSource.PlayOneShot(speedUpSound);
-            }
-
-            // 3. Запускаем анимацию всплывания и исчезновения
-            speedUpAnimator.SetTrigger("ShowTrigger");
-
-            // 4. Ждем время, равное длительности анимации (например, 2.5 секунды)
-            yield return new WaitForSecondsRealtime(2f);
-
-            // 5. Выключаем объект обратно
-            speedUpText.SetActive(false);
+            speedUpAnimator.SetTrigger("ShowTrigger");
+            yield return new WaitForSecondsRealtime(2f);
+            speedUpText.SetActive(false);
         }
     }
 
@@ -228,14 +211,8 @@ public class PlayerController : MonoBehaviour
         isPaused = !isPaused;
         if (settingsPanel != null) settingsPanel.SetActive(isPaused);
 
-        if (isPaused)
-        {
-            Time.timeScale = 0f;
-        }
-        else
-        {
-            if (isGameActive && !isWaitingToStart) Time.timeScale = 1f;
-        }
+        if (isPaused) Time.timeScale = 0f;
+        else if (isGameActive && !isWaitingToStart) Time.timeScale = 1f;
     }
 
     public void SetVolume(float volume)
@@ -244,9 +221,7 @@ public class PlayerController : MonoBehaviour
         {
             backgroundMusic.volume = volume;
             if (volume > 0.05f && !backgroundMusic.isPlaying && (isGameActive || isPaused || isWaitingToStart))
-            {
                 backgroundMusic.Play();
-            }
         }
     }
 
@@ -275,7 +250,6 @@ public class PlayerController : MonoBehaviour
         Time.timeScale = 1;
         nextAccelerationTime = Time.time + accelerationInterval;
 
-        // Это активирует панель монет и обнулит их
         if (CoinCounter.instance != null) CoinCounter.instance.ResetRunCoins();
 
         if (roadGenerator != null) roadGenerator.StartLevel();
@@ -320,16 +294,43 @@ public class PlayerController : MonoBehaviour
     {
         if (!isGameActive) return;
         isGameActive = false;
-        Time.timeScale = 0;
 
-        // Это сохранит монеты в кошелек и СКРОЕТ игровой счетчик
+        // 1. Звук взрыва
+        if (deathSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(deathSound);
+        }
+
+        // 2. Визуальный эффект (если назначен префаб)
+        if (explosionPrefab != null)
+        {
+            Instantiate(explosionPrefab, transform.position, Quaternion.identity);
+        }
+
+        // 3. Физика полета
+        if (rb != null)
+        {
+            rb.freezeRotation = false; // Разрешаем кувыркаться
+            Vector3 explosionDir = new Vector3(Random.Range(-7f, 7f), 25f, -15f); // Подбрасываем высоко
+            rb.AddForce(explosionDir, ForceMode.Impulse);
+            rb.AddTorque(new Vector3(Random.Range(-10f, 10f), 10f, Random.Range(-10f, 10f)), ForceMode.Impulse);
+        }
+
+        // 4. Показ меню с задержкой
+        StartCoroutine(SlowDownAndShowMenu());
+
         if (CoinCounter.instance != null) CoinCounter.instance.SaveCoinsToWallet();
+        if (backgroundMusic != null) backgroundMusic.Stop();
+    }
+
+    IEnumerator SlowDownAndShowMenu()
+    {
+        yield return new WaitForSecondsRealtime(1.5f); // Время на полет
+
+        Time.timeScale = 0;
 
         if (gameOverPanel != null) gameOverPanel.SetActive(true);
         if (blurVolume != null) blurVolume.SetActive(true);
-        if (backgroundMusic != null) backgroundMusic.Stop();
-        if (heroAnimator != null) heroAnimator.speed = 0;
-        if (speedUpText != null) speedUpText.SetActive(false);
     }
 
     void Jump()
@@ -337,12 +338,7 @@ public class PlayerController : MonoBehaviour
         if (isShrinked) { if (slideCoroutine != null) StopCoroutine(slideCoroutine); StopSlideAndResetScale(); }
         if (isGrounded)
         {
-            // ВОСПРОИЗВЕДЕНИЕ ЗВУКА ПРЫЖКА
-            if (jumpSound != null && audioSource != null)
-            {
-                audioSource.PlayOneShot(jumpSound);
-            }
-
+            if (jumpSound != null && audioSource != null) audioSource.PlayOneShot(jumpSound);
             rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0, rb.linearVelocity.z);
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             isGrounded = false;
@@ -356,12 +352,7 @@ public class PlayerController : MonoBehaviour
 
         if (!isShrinked)
         {
-            // ВОСПРОИЗВЕДЕНИЕ ЗВУКА СКОЛЬЖЕНИЯ
-            if (slideSound != null && audioSource != null)
-            {
-                audioSource.PlayOneShot(slideSound);
-            }
-
+            if (slideSound != null && audioSource != null) audioSource.PlayOneShot(slideSound);
             slideCoroutine = StartCoroutine(PerformShrink());
         }
     }
