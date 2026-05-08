@@ -55,7 +55,7 @@ public class ObstacleGenerator : MonoBehaviour
         int randomLane = Random.Range(0, laneX.Length);
         pos.x = laneX[randomLane];
 
-        GameObject go = Instantiate(randomPrefab, pos, Quaternion.identity);
+        GameObject go = Instantiate(randomPrefab, pos, randomPrefab.transform.rotation);
         go.transform.SetParent(transform);
         obstacles.Add(go);
     }

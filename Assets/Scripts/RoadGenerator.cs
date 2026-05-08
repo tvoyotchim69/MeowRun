@@ -53,7 +53,7 @@ public class RoadGenerator : MonoBehaviour
         SwipeManager.instance.enabled = true;
 
         if (CoinCounter.instance != null)
-            CoinCounter.instance.ResetCoins();
+            CoinCounter.instance.ResetRunCoins();
     }
 
     public void ResetLevel()
@@ -70,6 +70,13 @@ public class RoadGenerator : MonoBehaviour
             CreateNextRoad();
         }
         SwipeManager.instance.enabled = false; // SwipeManager
+    }
+
+    public void UpdateSpeedOnly(float multiplier)
+    {
+        maxSpeed *= multiplier;
+        speed = maxSpeed;
+        // Ìועמה ResetCoins() ÍÅ גûחûגאועסÿ!
     }
 
 

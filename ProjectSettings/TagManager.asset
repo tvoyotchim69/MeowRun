@@ -8,6 +8,7 @@ TagManager:
   - Ground
   - Obstacle
   - Coin
+  - Ramp
   layers:
   - Default
   - TransparentFX
