@@ -32,8 +32,9 @@ public class CoinCounter : MonoBehaviour
         UpdateLobbyUI();
         UpdateGameUI();
 
-        // В самом начале (в лобби) выключаем игровой счетчик
         if (gameCoinPanel != null) gameCoinPanel.SetActive(false);
+        //PlayerPrefs.SetInt("TotalWallet", 0); // очистка монет
+        //UpdateLobbyUI();
     }
 
     public void AddCoins(int amount)
